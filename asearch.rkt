@@ -8,14 +8,15 @@
          racket/list
          data/heap
          2htdp/image
-         racket/runtime-path)
+         racket/runtime-path
+         racket/format)
 
 (define-signature grafo^
   (nodo? vecino? nodo-vecinos vecino-inicial vecino-costo vecino-destino))
 
 ; Función para crear la matriz con obstáculos
 (define (crear-matriz n)
-  (build-matrix n n (λ (x y) (random 2))))
+  (build-matrix n n (λ (x y) (random 3))))
 
 ; Se definen los structs a utilizar para el grafo
 (struct map-nodo (matriz x y) #:transparent)
@@ -33,7 +34,8 @@
     (match-define (map-vecino _ _ _ (map-nodo matriz x y)) costo)
     (match (matrix-ref matriz x y)
         [0  1]
-        [1  50]))
+        [1  1]
+        [2  50]))
 
   (define (nodo-vecinos n)
     (match-define (map-nodo matriz x y) n)
@@ -107,9 +109,8 @@
                     (heap-add! open-list y))
             )
         )
-      '())
- 
-    (printf "visited ~a nodes\n" contador)))
+      '()
+          )))
 
 (define ((nodo-manhattan-distance x-dest y-dest) n)
   (match-define (map-nodo matriz x y) n)
@@ -118,49 +119,41 @@
      (abs (- y y-dest)))
     )
 
-(define N 10)
+(define N 13)
 
-; A partir de aquí genera solo la primer imagen
-(define tablero (crear-matriz N))
-    
-(define map-scale 15)
+; Convierte los datos del struct en una lista para generar el camino en la GUI
+(define (obtener-camino camino)
+  (if (null? camino)
+      (display "El camino está vacío")
+      (obtener-camino-aux camino '()))
+  )
 
-(define (type-color ty)
-  (match ty
-    [0 "yellow"]
-    [1 "red"]))
+(define (obtener-camino-aux camino lista)
+  
+  (cond
+    [(null? camino) lista]
+    [else (obtener-camino-aux (cdr camino) (append lista (list (convertirFilasColumnas (string->number (string (string-ref (~a (map-vecino-dest (list-ref camino 0))) (- (string-length (~a(map-vecino-dest (list-ref camino 0)))) 4)))) (string->number (string (string-ref (~a (map-vecino-dest (list-ref camino 0))) (- (string-length (~a(map-vecino-dest (list-ref camino 0)))) 2))))))))]
+    )
+  )
 
-(define (cell-square ty)
-  (square map-scale "solid" (type-color ty)))
-
-(define (row-image matriz row)
-  (apply beside
-         (for/list ([col (in-range (matrix-num-cols matriz))])
-           (cell-square (matrix-ref matriz row col)))))
-
-(define (map-image matriz)
-  (apply above
-         (for/list ([row (in-range (matrix-num-rows matriz))])
-           (row-image matriz row))))
-    
-    
-    (define-runtime-path map-image.png "pictures/tablerin.png")
-    (save-image (map-image tablero) map-image.png)
-
-; Aquí ya se capturaría el inicio del usuario y se llamaría al algoritmo de búsqueda
-
-
-
-(define random-M
-  (crear-matriz N))
-
-(define random-path
-  (time
-   (a-search map@
-       (map-nodo random-M 0 0)
-       (nodo-manhattan-distance 0 2))))
-
-(printf "path is ~a long\n" (length random-path))
+;Funcion que convierte la posicion i j de una matriz en la misma posicion pero con un numero entero. Ej: Matriz(1,0) de una matriz 13x13 devolveria 14
+(define (convertirFilasColumnas i j)
+  (cond
+    [(> i 12) (display "Rango de filas invalido")]
+    [(> j 12) (display "Rango de columnas invalido")]
+    [(equal? i 0) j]
+    [(equal? i 1) (+ j 13)]
+    [(equal? i 2) (+ j 26)]
+    [(equal? i 3) (+ j 39)]
+    [(equal? i 4) (+ j 52)]
+    [(equal? i 5) (+ j 65)]
+    [(equal? i 6) (+ j 78)]
+    [(equal? i 7) (+ j 91)]
+    [(equal? i 8) (+ j 104)]
+    [(equal? i 9) (+ j 117)]
+    [(equal? i 10) (+ j 130)]
+    [(equal? i 11) (+ j 143)]
+    [else (+ j 156)]))
 
 
 (define map-scale 15)
@@ -168,7 +161,8 @@
 (define (type-color ty)
   (match ty
     [0 "yellow"]
-    [1 "red"]))
+    [1 "yellow"]
+    [2 "red"]))
 
 (define (cell-square ty)
   (square map-scale "solid" (type-color ty)))
@@ -194,7 +188,22 @@
   (foldr edge-image-on (map-image matriz) path))
 
 (define-runtime-path map-image.png "pictures/astar.png")
-(save-image (map-image random-M) map-image.png)
  
 (define-runtime-path path-image.png "pictures/capture.png")
-(save-image (path-image random-M random-path) path-image.png)
+
+
+(define (main filaIni colIni)
+  
+  (define tablero (crear-matriz N))
+  
+  (define recorrido (a-search map@ (map-nodo tablero 0 0) (nodo-manhattan-distance 0 5)))
+  
+  (if (null? recorrido)
+      (display "No existe un camino desde ese punto hasta la meta, por favor vuelva a ejecutar el programa con un punto diferente\n")
+      (display (obtener-camino recorrido))
+      )
+        (save-image (map-image tablero) map-image.png)
+        (save-image (path-image tablero recorrido) path-image.png)
+  )
+
+
