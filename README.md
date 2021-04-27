@@ -8,6 +8,9 @@ En este segundo proyecto programado se nos pide crear un programa inteligente ca
 Tomas Acuna:
 https://youtu.be/jPaGs36vk_U
 
+Marco Madrigal:
+https://youtu.be/YgCE9ez5Am4
+
 ## Ejecutar:
 Para ejecutar el proyecto, abrirlo en drRacket. El programa va a cargar el laberinto y le va a desplegar una imagen y le va a preguntar en cual coordenada quiere partir.
 Ingresar los valores X, Y y el programa empezará a resolver el problema.
